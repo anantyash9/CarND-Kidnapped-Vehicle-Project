@@ -54,31 +54,29 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
-
-	double std_x = std_pos[0];
-	double std_y = std_pos[1];
-	double std_theta = std_pos[2];
-
-	normal_distribution<double> dist_x(0, std_x);
-	normal_distribution<double> dist_y(0, std_y);
-	normal_distribution<double> dist_theta(0, std_theta);
-
-	for (auto & p : particles) {
-
-		if ( fabs(yaw_rate) < CONV_THRESHOLD) {
-			p.x += velocity * delta_t * cos( p.theta );
-			p.y += velocity * delta_t * sin( p.theta );
-		} 
-		else {
-			p.x += velocity / yaw_rate * ( sin( p.theta + yaw_rate * delta_t ) - sin( p.theta ) );
-			p.y += velocity / yaw_rate * ( cos( p.theta ) - cos( p.theta + yaw_rate * delta_t ) );
-			p.theta += yaw_rate * delta_t;
-		}
-
-		p.x += dist_x(gen);
-		p.y += dist_y(gen);
-		p.theta += dist_theta(gen);
+	default_random_engine gen;
+	cout<<"PREDICT started"<<endl;
+	for (int i = 0; i < num_particles; ++i) {
+		Particle temp = particles[i];
+		if (yaw_rate != 0){
+		temp.x = temp.x + (velocity/yaw_rate)*(sin(temp.theta+yaw_rate*delta_t)-sin(temp.theta));
+		temp.y = temp.y + (velocity/yaw_rate)*(cos(temp.theta) - cos(temp.theta+yaw_rate*delta_t));
+		temp.theta = temp.theta + yaw_rate*delta_t;
 	}
+	else
+	{
+		temp.x = temp.x +velocity*delta_t*cos(temp.theta);
+		temp.y = temp.y +velocity*delta_t*sin(temp.theta);
+	}
+	normal_distribution<double> dist_x(temp.x, std_pos[0]);
+  normal_distribution<double> dist_y(temp.y, std_pos[1]);
+  normal_distribution<double> dist_theta(temp.theta, std_pos[2]);
+	temp.x = dist_x(gen);
+ 	temp.y = dist_y(gen);
+	temp.theta = dist_theta(gen);
+	particles[i]=temp;
+	}
+cout<<"PREDICT done"<<endl;
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
