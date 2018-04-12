@@ -143,12 +143,13 @@ for(int i = 0; i < num_particles; i++){
 
 		dataAssociation(valid_landmarks, transformed_observations);
 
-		for (int j = 0; j < transformed_observations.size(); j++)
+		/**for (int j = 0; j < transformed_observations.size(); j++)
 		{
 		particles[j].associations.push_back(valid_landmarks[transformed_observations[j].id].id);
 		particles[j].sense_x.push_back(transformed_observations[j].x);
 		particles[j].sense_y.push_back(transformed_observations[j].y);
 		}
+		**/
 
 		double prob = 1.0;
 		double sig_x = std_landmark[0];
