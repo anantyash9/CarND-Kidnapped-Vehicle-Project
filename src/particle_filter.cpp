@@ -80,24 +80,26 @@ cout<<"PREDICT done"<<endl;
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
-	// TODO: Find the predicted measurement that is closest to each observed measurement and assign the 
+	// TODO: Find the predicted measurement that is closest to each observed measurement and assign the
 	//   observed measurement to this particular landmark.
-	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
+	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to
 	//   implement this method and use it as a helper during the updateWeights phase.
-
-
-	for (auto & o : observations) { // For each observation
-		double min_distance = numeric_limits<double>::max();
-		int map_id = -1;
-		for (auto & p : predicted) { // For each predition.
-			double dx = o.x - p.x;
-			double dy = o.y - p.y;
-			double distance = dy * dy + dx * dx;
-			map_id = distance < min_distance? p.id : map_id;
-			min_distance = min(min_distance, distance);
+	for (int i =0;i<observations.size();i++)
+	{
+		double min = sqrt((pow((predicted[0].x - observations[i].x),2) + (pow((predicted[0].y - observations[i].y),2))));
+		observations[i].id = predicted[0].id;
+	for (int j =0;j<predicted.size();j++)
+	{
+		double val =  sqrt((pow((predicted[j].x - observations[i].x),2) + (pow((predicted[j].y - observations[i].y),2))));
+		if (val<=min)
+		{
+			min = val ;
+			observations[i].id = predicted[j].id;
 		}
-		o.id = map_id;
+
 	}
+	}
+cout<<"data done"<<endl;
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
