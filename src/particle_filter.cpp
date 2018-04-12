@@ -113,55 +113,57 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 for(int i = 0; i < num_particles; i++){
+
 		double x = particles[i].x;
 		double y = particles[i].y;
 		double theta = particles[i].theta;
 
-		//get the Prediction...
-		std::vector<LandmarkObs> predictions;
+		std::vector<LandmarkObs> transformed_observations;
+		for(int j = 0; j < observations.size(); j++){
+			LandmarkObs temp;
+			temp.x = x + (cos(theta) * observations[j].x) - (sin(theta) * observations[j].y);
+			temp.y = y + (sin(theta) * observations[j].x) + (cos(theta) * observations[j].y);
+			temp.id = observations[j].id;
+			transformed_observations.push_back();
+		}
+
+		vector<LandmarkObs> valid_landmarks;
 		for(int j = 0; j < map_landmarks.landmark_list.size(); j++){
 			double distance= dist(map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f, particles[i].x,  particles[i].y);
 
 			if(distance < sensor_range)
 			{
-				LandmarkObs objPrediction;
-				objPrediction.x = map_landmarks.landmark_list[j].x_f;
-				objPrediction.y = map_landmarks.landmark_list[j].y_f;
-				objPrediction.id = map_landmarks.landmark_list[j].id_i;
+				LandmarkObs temp;
+				temp.x = map_landmarks.landmark_list[j].x_f;
+				temp.y = map_landmarks.landmark_list[j].y_f;
+				temp.id = map_landmarks.landmark_list[j].id_i;
 
-				predictions.push_back(objPrediction);
+				valid_landmarks.push_back(temp);
 			}
 		}
 
-		//get the Observation...
-		std::vector<LandmarkObs> transforms;
-		for(int j = 0; j < observations.size(); j++){
-			double xm = x + (cos(theta) * observations[j].x) - (sin(theta) * observations[j].y);
-			double ym = y + (sin(theta) * observations[j].x) + (cos(theta) * observations[j].y);
-			transforms.push_back(LandmarkObs({observations[j].id, xm, ym}));
-		}
-
-		dataAssociation(predictions, transforms);
+		dataAssociation(valid_landmarks, transformed_observations);
 
 		double prob = 1.0;
 		double sig_x = std_landmark[0];
 		double sig_y = std_landmark[1];
-		double norm = (1/(2 * M_PI * sig_x * sig_y));
+		double gauss_norm = (1/(2 * M_PI * sig_x * sig_y));
 
-		for(int j = 0; j < transforms.size(); j++){
-			double o_x, o_y, l_x, l_y;
-			o_x = transforms[j].x;
-			o_y = transforms[j].y;
+		for(int j = 0; j < transformed_observations.size(); j++){
 
-			l_x = predictions[transforms[j].id].x;
-			l_y = predictions[transforms[j].id].y;
+			double o_x = transformed_observations[j].x;
+			double o_y = transformed_observations[j].y;
 
-			double exp_w = exp(-1.0 * (((pow(o_x - l_x,2))/(2 * pow(sig_x,2))) + ((pow(o_y - l_y,2)/(2 * pow(sig_y,2))))));
-			prob = prob * exp_w * norm;
+			double l_x = valid_landmarks[transformed_observations[j].id].x;
+			double l_y = valid_landmarks[transformed_observations[j].id].y;
+
+			double exponent = exp(-1.0 * (((pow(o_x - l_x,2))/(2 * pow(sig_x,2))) + ((pow(o_y - l_y,2)/(2 * pow(sig_y,2))))));
+			prob *= exponent * norm;
 		}
 		particles[i].weight = prob;
 		weights[i] = prob;
 	}
+}
 
 void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
