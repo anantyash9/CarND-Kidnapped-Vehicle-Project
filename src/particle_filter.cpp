@@ -23,34 +23,31 @@ std::default_random_engine gen;
 const double CONV_THRESHOLD = 0.0001;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
-	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
-	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
+	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of
+	//   x, y, theta and their uncertainties from GPS) and all weights to 1.
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
-	if (this->is_initialized == false) {
+	default_random_engine gen;
+	num_particles = 1;
+ // Create normal distributions for x, y and theta
+ normal_distribution<double> dist_x(x, std[0]);
+ normal_distribution<double> dist_y(y, std[1]);
+ normal_distribution<double> dist_theta(theta, std[2]);
+ for (int i = 0; i < num_particles; ++i) {
+ 	Particle temp ;
+	temp.id = i;
+ 	temp.x = dist_x(gen);
+ 	temp.y = dist_y(gen);
+	temp.theta = dist_theta(gen);
+	temp.weight = 1;
+ 	particles.push_back(temp);
 
-		num_particles = 100;
-
-		double std_x = std[0];
-		double std_y = std[1];
-		double std_theta = std[2];
-
-		normal_distribution<double> dist_x(x, std_x);
-		normal_distribution<double> dist_y(y, std_y);
-		normal_distribution<double> dist_theta(theta, std_theta);
-
-		for (int i = 0; i < num_particles; i++) {
-			Particle particle;
-			particle.id = i;
-			particle.x = dist_x(gen);
-			particle.y = dist_y(gen);
-			particle.theta = dist_theta(gen);
-			particle.weight = 1.0;
-			particles.emplace_back(particle);
-		}
-		is_initialized = true;
-	}
 }
+is_initialized = true;
+weights.resize(num_particles);
+	cout<<"init done"<<endl;
+}
+
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
 	// TODO: Add measurements to each particle and add random Gaussian noise.
