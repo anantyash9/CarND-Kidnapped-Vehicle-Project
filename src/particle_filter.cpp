@@ -101,67 +101,70 @@ cout<<"data done"<<endl;
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		const std::vector<LandmarkObs> &observations, const Map &map_landmarks) {
-	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
+	// Updates the weights of each particle using a multi-variate Gaussian distribution. You can read
 	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-	// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
-	//   according to the MAP'S coordinate system. You will need to transform between the two systems.
-	//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
-	//   The following is a good resource for the theory:
-	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-	//   and the following is a good resource for the actual equation to implement (look at equation
-	//   3.33
-	//   http://planning.cs.uiuc.edu/node99.html
-	cout<<"update started"<<endl;
-	for (int j= 0; j < num_particles; ++j)
-	{
-	vector<LandmarkObs> T_obsr;
-	for (int i = 0; i < observations.size(); ++i)
-	{
-		LandmarkObs temp;
-		temp.x = particles[j].x+cos(particles[j].theta)*observations[i].x - sin(particles[j].theta)*observations[i].y;
-		temp.y = particles[j].y+sin(particles[j].theta)*observations[i].x - cos(particles[j].theta)*observations[i].y;
-		temp.id = observations[i].id;
-		T_obsr.push_back(temp);
-	}
-	vector<LandmarkObs> valid_landmarks;
-	for (int k= 0; k < map_landmarks.landmark_list.size(); ++k)
-	{
-		double distance = dist(map_landmarks.landmark_list[k].x_f,map_landmarks.landmark_list[k].y_f,particles[j].x,particles[j].y);
-		if (distance<sensor_range)
-		{
-			LandmarkObs temp;
-			temp.x = map_landmarks.landmark_list[k].x_f;
-			temp.y = map_landmarks.landmark_list[k].y_f;
-			temp.id = map_landmarks.landmark_list[k].id_i;
-			valid_landmarks.push_back(temp);
-		}
+  // First, when iterating through each particle, need to transform observation points to map coordinates.
+  // Next, associate each observation to its nearest landmark. The distribution can then be calculated.
+  
+  // First term of multi-variate normal Gaussian distribution calculated below
+  // It stays the same so can be outside the loop
+  const double a = 1 / (2 * M_PI * std_landmark[0] * std_landmark[1]);
+  
+  // The denominators of the mvGd also stay the same
+  const double x_denom = 2 * std_landmark[0] * std_landmark[0];
+  const double y_denom = 2 * std_landmark[1] * std_landmark[1];
 
-	}
-	dataAssociation(valid_landmarks,T_obsr);
-	for (int i = 0; i < observations.size(); ++i)
-	{
-		particles[j].associations.push_back(valid_landmarks[T_obsr[i].id].id);
-		particles[j].sense_x.push_back(T_obsr[i].x);
-		particles[j].sense_y.push_back(T_obsr[i].y);
-	}
-	double weight =1.0;
-	double sig_x = std_landmark[0];
-	double sig_y = std_landmark[1];
-	double gauss_norm= (1/(2 * M_PI * sig_x * sig_y));
-	for (int i = 0; i<T_obsr.size(); i++)
-	{
-		double x_obs =  T_obsr[j].x;
-		double y_obs =  T_obsr[j].y;
-		double mu_x =		valid_landmarks[T_obsr[j].id].x;
-		double mu_y =		valid_landmarks[T_obsr[j].id].y;
-		double exponent = pow((x_obs - mu_x),2)/(2 * pow(sig_x,2)) + pow((y_obs - mu_y),2)/(2 * pow(sig_y,2));
-		weight = weight * gauss_norm * exp(-exponent);
-	}
-	particles[j].weight=weight;
-	weights[j]=weight;
+  // Iterate through each particle
+  for (int i = 0; i < num_particles; ++i) {
+    
+    // For calculating multi-variate Gaussian distribution of each observation, for each particle
+    double mvGd = 1.0;
+    
+    // For each observation
+    for (int j = 0; j < observations.size(); ++j) {
+      
+      // Transform the observation point (from vehicle coordinates to map coordinates)
+      double trans_obs_x, trans_obs_y;
+      trans_obs_x = observations[j].x * cos(particles[i].theta) - observations[j].y * sin(particles[i].theta) + particles[i].x;
+      trans_obs_y = observations[j].x * sin(particles[i].theta) + observations[j].y * cos(particles[i].theta) + particles[i].y;
+      
+      // Find nearest landmark
+      vector<Map::single_landmark_s> landmarks = map_landmarks.landmark_list;
+      vector<double> landmark_obs_dist (landmarks.size());
+      for (int k = 0; k < landmarks.size(); ++k) {
+        
+        // Down-size possible amount of landmarks to look at by only looking at those in sensor range of the particle
+        // If in range, put in the distance vector for calculating nearest neighbor
+        double landmark_part_dist = sqrt(pow(particles[i].x - landmarks[k].x_f, 2) + pow(particles[i].y - landmarks[k].y_f, 2));
+        if (landmark_part_dist <= sensor_range) {
+          landmark_obs_dist[k] = sqrt(pow(trans_obs_x - landmarks[k].x_f, 2) + pow(trans_obs_y - landmarks[k].y_f, 2));
 
-}
-cout<<"weights done"<<endl;
+        } else {
+          // Need to fill those outside of distance with huge number, or they'll be a zero (and think they are closest)
+          landmark_obs_dist[k] = 999999.0;
+          
+        }
+        
+      }
+      
+      // Associate the observation point with its nearest landmark neighbor
+      int min_pos = distance(landmark_obs_dist.begin(),min_element(landmark_obs_dist.begin(),landmark_obs_dist.end()));
+      float nn_x = landmarks[min_pos].x_f;
+      float nn_y = landmarks[min_pos].y_f;
+      
+      // Calculate multi-variate Gaussian distribution
+      double x_diff = trans_obs_x - nn_x;
+      double y_diff = trans_obs_y - nn_y;
+      double b = ((x_diff * x_diff) / x_denom) + ((y_diff * y_diff) / y_denom);
+      mvGd *= a * exp(-b);
+      
+    }
+    
+    // Update particle weights with combined multi-variate Gaussian distribution
+    particles[i].weight = mvGd;
+    weights[i] = particles[i].weight;
+
+  }
 }
 
 void ParticleFilter::resample() {
