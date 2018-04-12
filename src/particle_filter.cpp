@@ -139,12 +139,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	}
 	dataAssociation(valid_landmarks,T_obsr);
-	for (int i = 0; i < observations.size(); ++i)
+	/**for (int i = 0; i < observations.size(); ++i)
 	{
 		particles[j].associations.push_back(valid_landmarks[T_obsr[i].id].id);
 		particles[j].sense_x.push_back(T_obsr[i].x);
 		particles[j].sense_y.push_back(T_obsr[i].y);
 	}
+	**/
 	double weight =1.0;
 	double sig_x = std_landmark[0];
 	double sig_y = std_landmark[1];
