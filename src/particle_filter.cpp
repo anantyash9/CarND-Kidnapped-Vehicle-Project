@@ -154,6 +154,7 @@ void ParticleFilter::resample() {
 	// Resamples particles with replacement with probability proportional to their weight.
   
 	//Random device generator using std::discrete_distribution
+	vector<Particle> resampled;
 	std::random_device rd;
 	std::mt19937 gen(rd());
 
