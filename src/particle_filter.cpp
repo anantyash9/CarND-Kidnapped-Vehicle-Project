@@ -143,13 +143,6 @@ for(int i = 0; i < num_particles; i++){
 
 		dataAssociation(valid_landmarks, transformed_observations);
 
-		/**for (int j = 0; j < transformed_observations.size(); j++)
-		{
-		particles[j].associations.push_back(valid_landmarks[transformed_observations[j].id].id);
-		particles[j].sense_x.push_back(transformed_observations[j].x);
-		particles[j].sense_y.push_back(transformed_observations[j].y);
-		}
-		**/
 
 		double prob = 1.0;
 		double sig_x = std_landmark[0];
@@ -180,29 +173,17 @@ void ParticleFilter::resample() {
 	vector<Particle> resampled;
 
 	//Random device generator using std::discrete_distribution
-	std::random_device rd;
-	std::mt19937 gen(rd());
-
-	discrete_distribution<int> random_number(0 , num_particles-1);
-	discrete_distribution<int> disct_dis(weights.begin(), weights.end());
-
-	unsigned index = random_number(rd);
-
-	double max_weight = *max_element(weights.begin(), weights.end());
-
-	//resampling
-	double beta =0.0;
-	for (int i =0; i <num_particles; i++)
+	random_device rd;
+	default_random_engine gen(rd());
+	vector<Particle> resampled;
+	resampled.resize(num_particles);
+	for (int i=0;i<num_particles;i++)
 	{
-		beta+=disct_dis(gen) * 2.0 * max_weight;
-		while(beta > weights[index])
-		{
-			beta -= weights[index];
-			index = (index + 1) % num_particles;
-		}
-		resampled.push_back(particles[index]);
+		discrete_distribution<int> r_weight(weights.begin(), weights.end());
+		resampled[i] = particles[r_weight(gen)];
 	}
 	particles = resampled;
+
 }
 
 Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 
