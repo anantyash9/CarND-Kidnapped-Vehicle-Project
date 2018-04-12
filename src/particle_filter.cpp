@@ -27,7 +27,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	if(is_initialized)
 		return;
 	default_random_engine gen;
-	num_particles = 1;
+	num_particles = 100;
  // Create normal distributions for x, y and theta
  normal_distribution<double> dist_x(x, std[0]);
  normal_distribution<double> dist_y(y, std[1]);
