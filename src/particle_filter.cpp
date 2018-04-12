@@ -155,10 +155,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	double gauss_norm= (1/(2 * M_PI * sig_x * sig_y));
 	for (int i = 0; i<T_obsr.size(); i++)
 	{
-		double x_obs =  T_obsr[j].x;
-		double y_obs =  T_obsr[j].y;
-		double mu_x =		valid_landmarks[T_obsr[j].id].x;
-		double mu_y =		valid_landmarks[T_obsr[j].id].y;
+		double x_obs =  T_obsr[i].x;
+		double y_obs =  T_obsr[i].y;
+		double mu_x =		valid_landmarks[T_obsr[i].id].x;
+		double mu_y =		valid_landmarks[T_obsr[i].id].y;
 		double exponent = pow((x_obs - mu_x),2)/(2 * pow(sig_x,2)) + pow((y_obs - mu_y),2)/(2 * pow(sig_y,2));
 		weight *=  gauss_norm * exp(-exponent);
 	}
