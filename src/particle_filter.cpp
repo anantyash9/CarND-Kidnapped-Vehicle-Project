@@ -153,20 +153,30 @@ void ParticleFilter::resample() {
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 	// Resamples particles with replacement with probability proportional to their weight.
   
-  // Vector for new particles
-  vector<Particle> new_particles (num_particles);
-  
-  // Use discrete distribution to return particles by weight
-  random_device rd;
-  default_random_engine gen(rd());
-  for (int i = 0; i < num_particles; ++i) {
-    discrete_distribution<int> index(weights.begin(), weights.end());
-    new_particles[i] = particles[index(gen)];
-    
-  }
-  
-  // Replace old particles with the resampled particles
-  particles = new_particles;
+	//Random device generator using std::discrete_distribution
+	std::random_device rd;
+	std::mt19937 gen(rd());
+
+	discrete_distribution<int> random_number(0 , num_particles-1);
+	discrete_distribution<int> disct_dis(weights.begin(), weights.end());
+
+	unsigned index = random_number(rd);
+
+	double max_weight = *max_element(weights.begin(), weights.end());
+
+	//resampling
+	double beta =0.0;
+	for (int i =0; i <num_particles; i++)
+	{
+		beta+=disct_dis(gen) * 2.0 * max_weight;
+		while(beta > weights[index])
+		{
+			beta -= weights[index];
+			index = (index + 1) % num_particles;
+		}
+		resampled.push_back(particles[index]);
+	}
+	particles = resampled;
 
 }
 
