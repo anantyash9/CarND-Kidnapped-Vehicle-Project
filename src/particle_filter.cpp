@@ -44,7 +44,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 }
 is_initialized = true;
 weights.resize(num_particles);
-	cout<<"init done"<<endl;
+
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
@@ -53,7 +53,6 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 	default_random_engine gen;
-	cout<<"PREDICT started"<<endl;
 	for (int i = 0; i < num_particles; ++i) {
 		Particle temp = particles[i];
 		if (yaw_rate != 0){
@@ -74,7 +73,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	temp.theta = dist_theta(gen);
 	particles[i]=temp;
 	}
-cout<<"PREDICT done"<<endl;
+
 
 }
 
