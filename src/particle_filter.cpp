@@ -125,6 +125,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		temp.id = observations[i].id;
 		T_obsr.push_back(temp);
 	}
+	cout<<"T_obsr"<<endl;
 	vector<LandmarkObs> valid_landmarks;
 	for (int k= 0; k < map_landmarks.landmark_list.size(); ++k)
 	{
@@ -139,6 +140,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		}
 
 	}
+	cout<<"Landmarks"<<endl;
 	dataAssociation(valid_landmarks,T_obsr);
 	for (int i = 0; i < observations.size(); ++i)
 	{
@@ -146,6 +148,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		particles[j].sense_x.push_back(T_obsr[i].x);
 		particles[j].sense_y.push_back(T_obsr[i].y);
 	}
+	cout<<"associations"<<endl;
 	double weight =1.0;
 	double sig_x = std_landmark[0];
 	double sig_y = std_landmark[1];
@@ -161,6 +164,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	}
 	particles[j].weight=weight;
 	weights[j]=weight;
+	cout<<"weights loop"<<endl;
 
 }
 cout<<"weights done"<<endl;
