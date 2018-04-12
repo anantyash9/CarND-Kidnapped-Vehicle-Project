@@ -85,7 +85,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   implement this method and use it as a helper during the updateWeights phase.
 	for (int i =0;i<observations.size();i++)
 	{	double min = dist(observations[i].x, observations[i].y,predicted[0].x, predicted[0].y);
-		observations[i].id = predicted[0].id;
+		observations[i].id = 0;
 
 	for (int j =0;j<predicted.size();j++)
 	{
@@ -93,7 +93,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 		if (val<=min)
 		{
 			min = val ;
-			observations[i].id = predicted[j].id;
+			observations[i].id = j;
 		}
 
 	}
