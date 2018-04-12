@@ -50,30 +50,37 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
-	default_random_engine gen;
-	cout<<"PREDICT started"<<endl;
-	for (int i = 0; i < num_particles; ++i) {
-		Particle temp = particles[i];
-		if (yaw_rate != 0){
-		temp.x = temp.x + (velocity/yaw_rate)*(sin(temp.theta+yaw_rate*delta_t)-sin(temp.theta));
-		temp.y = temp.y + (velocity/yaw_rate)*(cos(temp.theta) - cos(temp.theta+yaw_rate*delta_t));
-		temp.theta = temp.theta + yaw_rate*delta_t;
-	}
-	else
-	{
-		temp.x = temp.x +velocity*delta_t*cos(temp.theta);
-		temp.y = temp.y +velocity*delta_t*sin(temp.theta);
-	}
-	normal_distribution<double> dist_x(temp.x, std_pos[0]);
-  normal_distribution<double> dist_y(temp.y, std_pos[1]);
-  normal_distribution<double> dist_theta(temp.theta, std_pos[2]);
-	temp.x = dist_x(gen);
- 	temp.y = dist_y(gen);
-	temp.theta = dist_theta(gen);
-	particles[i]=temp;
-	}
-cout<<"PREDICT done"<<endl;
+  // Engine for later generation of particles
+  default_random_engine gen;
+  
+  // Make distributions for adding noise
+  normal_distribution<double> dist_x(0, std_pos[0]);
+  normal_distribution<double> dist_y(0, std_pos[1]);
+  normal_distribution<double> dist_theta(0, std_pos[2]);
+  
+  // Different equations based on if yaw_rate is zero or not
+  for (int i = 0; i < num_particles; ++i) {
+    
+    if (abs(yaw_rate) != 0) {
+      // Add measurements to particles
+      particles[i].x += (velocity/yaw_rate) * (sin(particles[i].theta + (yaw_rate * delta_t)) - sin(particles[i].theta));
+      particles[i].y += (velocity/yaw_rate) * (cos(particles[i].theta) - cos(particles[i].theta + (yaw_rate * delta_t)));
+      particles[i].theta += yaw_rate * delta_t;
+      
+    } else {
+      // Add measurements to particles
+      particles[i].x += velocity * delta_t * cos(particles[i].theta);
+      particles[i].y += velocity * delta_t * sin(particles[i].theta);
+      // Theta will stay the same due to no yaw_rate
+      
+    }
 
+    // Add noise to the particles
+    particles[i].x += dist_x(gen);
+    particles[i].y += dist_y(gen);
+    particles[i].theta += dist_theta(gen);
+    
+  }
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
