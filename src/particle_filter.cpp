@@ -53,34 +53,29 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 	default_random_engine gen;
-
-	for (int i=0; i < num_particles; i++)
-	{
-		double x, y, theta;
-
-		x = particles[i].x;
-		y = particles[i].y;
-		theta = particles[i].theta;
-
-		if(fabs(yaw_rate) < 0.001)
-		{
-			particles[i].x += velocity * cos(theta) * (delta_t);
-			particles[i].y += velocity * sin(theta) * (delta_t);
-		}
-		else
-		{
-			particles[i].x += (velocity / yaw_rate) * (sin(theta + (yaw_rate * delta_t)) - sin(theta));
-			particles[i].y += (velocity / yaw_rate) * (cos(theta) - cos(theta + (yaw_rate * delta_t))) ;
-			particles[i].theta += (yaw_rate * delta_t);
-		}
-		normal_distribution<double> std_x(0, std_pos[0]);
-		normal_distribution<double> std_y(0, std_pos[1]);
-		normal_distribution<double> std_theta(0, std_pos[2]);
-
-		particles[i].x += std_x(gen);
-		particles[i].y += std_y(gen);
-		particles[i].theta += std_theta(gen);
+	cout<<"PREDICT started"<<endl;
+	for (int i = 0; i < num_particles; ++i) {
+		Particle temp = particles[i];
+		if (yaw_rate != 0){
+		temp.x = temp.x + (velocity/yaw_rate)*(sin(temp.theta+yaw_rate*delta_t)-sin(temp.theta));
+		temp.y = temp.y + (velocity/yaw_rate)*(cos(temp.theta) - cos(temp.theta+yaw_rate*delta_t));
+		temp.theta = temp.theta + yaw_rate*delta_t;
 	}
+	else
+	{
+		temp.x = temp.x +velocity*delta_t*cos(temp.theta);
+		temp.y = temp.y +velocity*delta_t*sin(temp.theta);
+	}
+	normal_distribution<double> dist_x(temp.x, std_pos[0]);
+  normal_distribution<double> dist_y(temp.y, std_pos[1]);
+  normal_distribution<double> dist_theta(temp.theta, std_pos[2]);
+	temp.x = dist_x(gen);
+ 	temp.y = dist_y(gen);
+	temp.theta = dist_theta(gen);
+	particles[i]=temp;
+	}
+cout<<"PREDICT done"<<endl;
+
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
