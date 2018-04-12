@@ -124,7 +124,7 @@ for(int i = 0; i < num_particles; i++){
 			temp.x = x + (cos(theta) * observations[j].x) - (sin(theta) * observations[j].y);
 			temp.y = y + (sin(theta) * observations[j].x) + (cos(theta) * observations[j].y);
 			temp.id = observations[j].id;
-			transformed_observations.push_back();
+			transformed_observations.push_back(temp);
 		}
 
 		vector<LandmarkObs> valid_landmarks;
@@ -158,7 +158,7 @@ for(int i = 0; i < num_particles; i++){
 			double l_y = valid_landmarks[transformed_observations[j].id].y;
 
 			double exponent = exp(-1.0 * (((pow(o_x - l_x,2))/(2 * pow(sig_x,2))) + ((pow(o_y - l_y,2)/(2 * pow(sig_y,2))))));
-			prob *= exponent * norm;
+			prob *= exponent * gauss_norm;
 		}
 		particles[i].weight = prob;
 		weights[i] = prob;
